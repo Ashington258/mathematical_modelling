@@ -12,7 +12,11 @@ Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
+# 设置支持中文的字体
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体（SimHei）
+plt.rcParams['axes.unicode_minus'] = False    # 解决负号 '-' 显示为方块的问题
 # 定义决策状态
 states = [
     "零配件1",
@@ -150,9 +154,9 @@ results = pd.DataFrame(
 # 可视化分析结果
 plt.figure(figsize=(12, 6))
 plt.bar(results["States"], results["Value Estimates"], color="skyblue")
-plt.xlabel("States")
-plt.ylabel("Value Estimates")
-plt.title("Value Estimates for Each State")
+plt.xlabel("状态")
+plt.ylabel("状态值")
+#plt.title("Value Estimates for Each State")
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()

@@ -2,6 +2,11 @@ import itertools
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import matplotlib.font_manager as fm
+
+# 设置支持中文的字体
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体（SimHei）
+plt.rcParams['axes.unicode_minus'] = False    # 解决负号 '-' 显示为方块的问题
 
 # 参数定义，根据表格
 parts = [
@@ -189,9 +194,12 @@ profits_matrix = np.array(profits[: matrix_size**2]).reshape((matrix_size, matri
 # 绘制热力图
 plt.figure(figsize=(12, 10))
 sns.heatmap(profits_matrix, cmap="coolwarm", annot=False, cbar=True)
-plt.title("Heatmap of Profits for All Decision Paths")
-plt.xlabel("Decision Combination Index")
-plt.ylabel("Decision Combination Index")
+# 移除横纵坐标标称值
+plt.xticks([])  # 移除x轴坐标
+plt.yticks([])  # 移除y轴坐标
+#plt.title("Heatmap of Profits for All Decision Paths")
+#plt.xlabel("决策组合指数")
+#plt.ylabel("决策组合指数")
 plt.show()
 
 # 输出最优决策路径和对应的收益
