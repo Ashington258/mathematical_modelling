@@ -9,8 +9,6 @@ Description: 请填写简介
 Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
 """
 
-
-
 import json
 
 
@@ -92,7 +90,7 @@ if __name__ == "__main__":
     )  # 替换为实际JSON文件路径
 
     # 用户选择使用的情形
-    selected_case = "Case 4"  # 用户可以修改此处选择不同的情形
+    selected_case = "Case 6"  # 用户可以修改此处选择不同的情形
 
     # 获取选定情形的参数
     params = get_parameters(data, selected_case)

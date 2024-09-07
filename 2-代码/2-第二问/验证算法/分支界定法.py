@@ -1,5 +1,4 @@
 import json
-from itertools import product
 
 # 从JSON文件读取数据
 with open(
@@ -70,28 +69,48 @@ def calculate_profit(d1, d2, d3, d4, params):
     return profit
 
 
+# 分支界定法求解
+def branch_and_bound(params):
+    best_profit = float("-inf")
+    best_decision = None
+    queue = [(0, 0, 0, 0, 0)]  # (d1, d2, d3, d4, level)
+
+    while queue:
+        d1, d2, d3, d4, level = queue.pop(0)
+
+        # 计算当前节点的收益
+        profit = calculate_profit(d1, d2, d3, d4, params)
+
+        # 如果这是叶子节点，更新最佳决策
+        if level == 4:
+            if profit > best_profit:
+                best_profit = profit
+                best_decision = (d1, d2, d3, d4)
+        else:
+            # 生成子节点并加入队列，继续探索
+            next_level = level + 1
+            if next_level == 1:
+                queue.append((1, d2, d3, d4, next_level))
+                queue.append((0, d2, d3, d4, next_level))
+            elif next_level == 2:
+                queue.append((d1, 1, d3, d4, next_level))
+                queue.append((d1, 0, d3, d4, next_level))
+            elif next_level == 3:
+                queue.append((d1, d2, 1, d4, next_level))
+                queue.append((d1, d2, 0, d4, next_level))
+            elif next_level == 4:
+                queue.append((d1, d2, d3, 1, next_level))
+                queue.append((d1, d2, d3, 0, next_level))
+
+    return best_decision, best_profit
+
+
 # 选择特定情况
-case_number = "5"  # 选择情况1
+case_number = "5"  # 选择情况6
 params = data["cases"][case_number]
 
-# 穷举所有决策组合
-decisions = [
-    (d1, d2, d3, d4)
-    for d1 in range(2)
-    for d2 in range(2)
-    for d3 in range(2)
-    for d4 in range(2)
-]
-profits = [calculate_profit(d1, d2, d3, d4, params) for d1, d2, d3, d4 in decisions]
-
-# 找出最高利润
-max_profit = max(profits)
-max_profit_index = profits.index(max_profit)
-optimal_decision = decisions[max_profit_index]
-
-# 输出结果
-for decision, profit in zip(decisions, profits):
-    print(f"Decision: {decision}, Profit: {profit:.2f}")
+# 使用分支界定法寻找最优路径
+optimal_decision, max_profit = branch_and_bound(params)
 
 # 输出最优路径
-print(f"/nOptimal Decision: {optimal_decision}, Maximum Profit: {max_profit:.2f}")
+print(f"\nOptimal Decision: {optimal_decision}, Maximum Profit: {max_profit:.2f}")
