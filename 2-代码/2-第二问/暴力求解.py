@@ -1,183 +1,62 @@
-import matplotlib.pyplot as plt
+"""
+Author: Ashington ashington258@proton.me
+Date: 2024-09-06 15:38:16
+LastEditors: Ashington ashington258@proton.me
+LastEditTime: 2024-09-07 14:17:37
+FilePath: \mathematical_modelling\2-代码\2-第二问\暴力求解.py
+Description: 请填写简介
+联系方式:921488837@qq.com
+Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+"""
 
+# 参数
+c_p = [4, 18]  # 零配件购买成本
+c_d = [2, 3]  # 零配件检测成本
+c_d_f = 3  # 成品检测成本
+c_a_f = 5  # 成品拆解成本
+c_s = 6  # 调换成本
+p_c = [0.1, 0.1]  # 零配件次品率
+p_f = 0.1  # 成品次品率
+s_f = 56  # 成品售价
+n_c = 1  # 零配件数量
 
-def calculate_cost_benefit(q1, c1, t1, q2, c2, t2, p, s, t_y, r, l, d):
-    # 初始化结果列表
-    results = []
+# 初始化最优路径和最小成本
+best_path = None
+min_cost = float("inf")
 
-    # 决策路径编号
-    path_id = 0
+# 遍历所有可能的决策组合
+for x1 in [0, 1]:
+    for x2 in [0, 1]:
+        for y in [0, 1]:
+            for z in [0, 1]:
+                # 当前决策组合
+                x = [x1, x2]
 
-    # 穷举所有决策组合
-    for x1 in [True, False]:  # 是否检测零配件1
-        for x2 in [True, False]:  # 是否检测零配件2
-            for y in [True, False]:  # 是否检测成品
-                for z in [True, False]:  # 是否拆解不合格成品
-                    # 增加路径编号
-                    path_id += 1
+                # 计算成品数量
+                n_f = n_c * (1 - p_c[0] * x[0]) * (1 - p_c[1] * x[1])
 
-                    # 零配件成本
-                    parts_cost = (c1 + t1 * x1) * (1 - q1 * x1) + (c2 + t2 * x2) * (
-                        1 - q2 * x2
-                    )
+                # 成本函数
+                C_p_c = n_c * sum(c_p[i] for i in range(2))
+                C_d_c = n_c * sum(x[i] * c_d[i] for i in range(2))
+                C_d_f = c_d_f * y * n_f
+                C_a_f = c_a_f * p_f * z * n_f
+                C_s = c_s * p_f * y * n_f
 
-                    # 装配成本
-                    assembly_cost = s
+                # 利润函数
+                S = s_f * n_f
 
-                    # 成品合格概率
-                    good_parts_prob = (1 - q1 * x1) * (1 - q2 * x2)
-                    good_product_prob = good_parts_prob * (1 - p)
+                # 总成本目标函数
+                Z = C_p_c + C_d_c + (C_d_f + C_a_f + C_s - S)
 
-                    # 成品检测成本
-                    product_test_cost = t_y * y
+                # 输出当前决策组合及其总成本
+                print(f"决策路径: x1={x1}, x2={x2}, y={y}, z={z} => 总成本: {Z}")
 
-                    # 销售收益
-                    revenue = r * good_product_prob
+                # 更新最优路径和最小成本
+                if Z < min_cost:
+                    min_cost = Z
+                    best_path = (x1, x2, y, z)
 
-                    # 不合格成品处理成本
-                    defective_products = 1 - good_product_prob
-                    if y:
-                        defective_cost = (
-                            product_test_cost + (d * z)
-                        ) * defective_products
-                    else:
-                        defective_cost = (l + (d * z)) * defective_products
-
-                    # 计算总成本
-                    total_cost = (
-                        parts_cost + assembly_cost + product_test_cost + defective_cost
-                    )
-
-                    # 存储结果
-                    results.append(
-                        {
-                            "Path ID": path_id,
-                            "Check Component 1": x1,
-                            "Check Component 2": x2,
-                            "Check Product": y,
-                            "Dismantle Defective": z,
-                            "Total Cost": total_cost,
-                            "Revenue": revenue,
-                            "Profit": revenue - total_cost,
-                        }
-                    )
-
-    return results
-
-
-# 情形参数
-scenarios = [
-    {
-        "q1": 0.10,
-        "c1": 4,
-        "t1": 2,
-        "q2": 0.10,
-        "c2": 18,
-        "t2": 3,
-        "p": 0.10,
-        "s": 6,
-        "t_y": 3,
-        "r": 56,
-        "l": 6,
-        "d": 5,
-    },
-    {
-        "q1": 0.20,
-        "c1": 4,
-        "t1": 2,
-        "q2": 0.20,
-        "c2": 18,
-        "t2": 3,
-        "p": 0.20,
-        "s": 6,
-        "t_y": 3,
-        "r": 56,
-        "l": 6,
-        "d": 5,
-    },
-    {
-        "q1": 0.10,
-        "c1": 4,
-        "t1": 2,
-        "q2": 0.10,
-        "c2": 18,
-        "t2": 3,
-        "p": 0.10,
-        "s": 6,
-        "t_y": 3,
-        "r": 56,
-        "l": 30,
-        "d": 5,
-    },
-    {
-        "q1": 0.20,
-        "c1": 4,
-        "t1": 1,
-        "q2": 0.20,
-        "c2": 18,
-        "t2": 1,
-        "p": 0.20,
-        "s": 6,
-        "t_y": 2,
-        "r": 56,
-        "l": 30,
-        "d": 5,
-    },
-    {
-        "q1": 0.10,
-        "c1": 4,
-        "t1": 8,
-        "q2": 0.20,
-        "c2": 18,
-        "t2": 1,
-        "p": 0.10,
-        "s": 6,
-        "t_y": 2,
-        "r": 56,
-        "l": 10,
-        "d": 5,
-    },
-    {
-        "q1": 0.05,
-        "c1": 4,
-        "t1": 2,
-        "q2": 0.05,
-        "c2": 18,
-        "t2": 3,
-        "p": 0.05,
-        "s": 6,
-        "t_y": 3,
-        "r": 56,
-        "l": 10,
-        "d": 40,
-    },
-]
-
-# 对每种情形计算并找出最优路径
-optimal_paths = []
-for index, params in enumerate(scenarios):
-    results = calculate_cost_benefit(**params)
-    optimal_result = min(results, key=lambda x: x["Total Cost"])
-    optimal_paths.append(optimal_result["Total Cost"])
-    print(f"Scenario {index + 1} Optimal Path:")
-    for key, value in optimal_result.items():
-        print(f"  {key}: {value}")
-    print()
-
-# 可视化
-plt.figure(figsize=(10, 5))
-plt.plot(
-    range(1, 7),
-    optimal_paths,
-    marker="o",
-    linestyle="-",
-    color="b",
-    label="Optimal Path Total Cost",
+# 输出最优决策路径和最小成本
+print(
+    f"最优决策路径: x1={best_path[0]}, x2={best_path[1]}, y={best_path[2]}, z={best_path[3]} => 最小总成本: {min_cost}"
 )
-plt.title("Optimal Path Total Cost Across Scenarios")
-plt.xlabel("Scenario")
-plt.ylabel("Total Cost")
-plt.xticks(range(1, 7), [f"Scenario {i}" for i in range(1, 7)])
-plt.grid(True)
-plt.legend()
-plt.show()
