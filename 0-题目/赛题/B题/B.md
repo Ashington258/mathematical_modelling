@@ -1,3 +1,13 @@
+<!--
+ * @Author: Ashington ashington258@proton.me
+ * @Date: 2024-09-05 19:51:13
+ * @LastEditors: Ashington ashington258@proton.me
+ * @LastEditTime: 2024-09-07 19:51:05
+ * @FilePath: \mathematical_modelling\0-题目\赛题\B题\B.md
+ * @Description: 请填写简介
+ * 联系方式:921488837@qq.com
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+-->
 ## 2024 年高教社杯全国大学生数学建模竞赛题目
 
 **B 题 生产过程中的决策问题**
@@ -45,7 +55,18 @@
 
 对 𝑚 道工序、𝑛 个零配件，已知零配件、半成品和成品的次品率，重复问题 2，给出生产过程的决策方案。图 1 给出了 2 道工序、8 个零配件的情况，具体数值由表 2 给出。
 
-
+- 成品(图 1)
+  - 半成品1
+    - 零配件1
+    - 零配件2
+    - 零配件3
+  - 半成品2
+    - 零配件4
+    - 零配件5
+    - 零配件6
+  - 半成品3
+    - 零配件7
+    - 零配件8
 ![图 1 两道工序、8 个零配件的组装情况](image.png)
 **表 2 企业在生产中遇到的情况（问题 3）**
 
