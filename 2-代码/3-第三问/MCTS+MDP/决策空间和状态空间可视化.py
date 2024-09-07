@@ -1,0 +1,277 @@
+import random
+from math import log
+import matplotlib.pyplot as plt
+import networkx as nx
+
+
+def MCTS(root, iterations):
+    for _ in range(iterations):
+        node = root
+        # 1. Selection
+        while node.is_fully_expanded() and not node.state.is_terminal():
+            node = node.best_child()
+
+        # 2. Expansion
+        if not node.is_fully_expanded() and not node.state.is_terminal():
+            possible_moves = node.state.possible_moves()
+            move = random.choice(possible_moves)
+            new_state = node.state.move(move)
+            child_node = Node(new_state, node)  # 加入 parent 参数
+            node.children.append(child_node)
+            node = child_node
+
+        # 3. Simulation
+        reward = simulate(node.state)
+
+        # 4. Backpropagation
+        while node is not None:
+            node.update(reward)
+            node = node.parent
+
+
+def simulate(state):
+    # 这里需要定义一个模拟函数来评估从当前状态开始的随机玩法的结果
+    while not state.is_terminal():
+        possible_moves = state.possible_moves()
+        move = random.choice(possible_moves)
+        state = state.move(move)
+    return state.reward()
+
+
+class Node:
+    node_counter = 0  # 静态变量，给每个节点分配唯一ID
+
+    def __init__(self, state, parent=None):
+        self.id = Node.node_counter
+        Node.node_counter += 1
+        self.state = state
+        self.parent = parent
+        self.value = 0
+        self.visits = 0
+        self.children = []
+
+    def expand(self):
+        for move in self.state.possible_moves():
+            new_state = self.state.move(move)
+            child_node = Node(new_state, self)
+            self.children.append(child_node)
+
+    def is_fully_expanded(self):
+        return len(self.children) == len(self.state.possible_moves())
+
+    def best_child(self, c_param=1.4):
+        choices_weights = [
+            (child.value / child.visits)
+            + c_param * (2 * log(self.visits) / child.visits) ** 0.5
+            for child in self.children
+        ]
+        return self.children[choices_weights.index(max(choices_weights))]
+
+    def update(self, reward):
+        self.visits += 1
+        self.value += reward
+
+
+class MDPState:
+    def __init__(self, decisions, parts, semi_products, final_product, n_c):
+        self.decisions = decisions
+        self.parts = parts
+        self.semi_products = semi_products
+        self.final_product = final_product
+        self.n_c = n_c
+
+    def possible_moves(self):
+        if len(self.decisions) < 16:  # 有 16 个决策
+            return [0, 1]
+        return []
+
+    def move(self, decision):
+        new_decisions = self.decisions[:]
+        new_decisions.append(decision)
+        return MDPState(
+            new_decisions, self.parts, self.semi_products, self.final_product, self.n_c
+        )
+
+    def is_terminal(self):
+        return len(self.decisions) == 16
+
+    def reward(self):
+        # 计算零配件购买成本 C^c_p
+        C_c_p = sum(
+            n_c * c_p
+            for c_p, n_c in zip(
+                [part["purchase_price"] for part in self.parts], self.n_c
+            )
+        )
+
+        # 计算零配件检测成本 C^c_d
+        C_c_d = sum(
+            n_c * x * c_d
+            for x, c_d, n_c in zip(
+                self.decisions[:8],
+                [part["inspection_cost"] for part in self.parts],
+                self.n_c,
+            )
+        )
+
+        # 成品次品率 p^f
+        p_f = self.final_product["defect_rate"]
+
+        # 检测合格后的零配件数量
+        n_c_post_inspection = sum(
+            n_c * (1 - x * p_c)
+            for x, p_c, n_c in zip(
+                self.decisions[:8],
+                [part["defect_rate"] for part in self.parts],
+                self.n_c,
+            )
+        )
+
+        # 成品数量 n^f
+        n_f = n_c_post_inspection * (1 - p_f)
+
+        # 计算成品检测成本 C_d_f
+        C_d_f = self.final_product["inspection_cost"] * self.decisions[14] * n_f
+
+        # 计算成品拆解成本 C_a_f
+        C_a_f = self.final_product["disassembly_cost"] * self.decisions[15] * n_f * p_f
+
+        # 计算调换成本 C_s
+        C_s = self.final_product["exchange_loss"] * self.decisions[14] * n_f * p_f
+
+        # 计算成品装配成本 C_s_f
+        C_s_f = self.final_product["assembly_cost"] * n_f
+
+        # 计算利润 S
+        S = self.final_product["market_price"] * n_f
+
+        # 计算总成本 Z
+        Z = C_c_p + C_c_d + C_d_f + C_a_f + C_s + C_s_f - S
+
+        return -Z  # 返回负收益，因为我们是在最小化总成本
+
+
+# 更新 parts, semi_products, final_product 和 n_c 的值
+parts = [
+    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 1
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 2
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 3
+    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 4
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 5
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 6
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 7
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 8
+]
+
+semi_products = [
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 1
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 2
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 3
+]
+
+final_product = {
+    "defect_rate": 0.10,
+    "assembly_cost": 8,
+    "inspection_cost": 6,
+    "disassembly_cost": 10,
+    "market_price": 200,
+    "exchange_loss": 40,
+}
+
+n_c = [1] * 8  # 每种零配件数量均为 100
+
+# 初始化状态
+initial_state = MDPState([], parts, semi_products, final_product, n_c)
+root = Node(initial_state)
+
+# 运行 MCTS
+MCTS(root, iterations=1000)
+
+
+# 可视化函数
+def visualize_tree(root):
+    G = nx.DiGraph()  # 创建一个有向图
+
+    # 深度优先搜索，构建图
+    def add_edges(node):
+        for child in node.children:
+            G.add_edge(node.id, child.id, visits=child.visits, value=child.value)
+            add_edges(child)
+
+    add_edges(root)
+
+    # 设置图形布局
+    pos = nx.spring_layout(G)
+
+    # 访问次数作为边的标签
+    edge_labels = {(u, v): f'Visits: {d["visits"]}' for u, v, d in G.edges(data=True)}
+
+    # 绘制节点和边
+    plt.figure(figsize=(12, 8))
+    nx.draw(G, pos, with_labels=True, node_size=500, node_color="skyblue", font_size=10)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    plt.title("MCTS 决策树结构")
+    plt.show()
+
+
+def visualize_node_visits(root):
+    nodes = []
+    visits = []
+
+    # 记录每个节点的访问次数
+    def collect_visits(node):
+        nodes.append(node.id)
+        visits.append(node.visits)
+        for child in node.children:
+            collect_visits(child)
+
+    collect_visits(root)
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(nodes, visits, color="purple")
+    plt.xlabel("Node ID")
+    plt.ylabel("Visits")
+    plt.title("节点访问次数分布")
+    plt.show()
+
+
+def visualize_rewards(root):
+    nodes = []
+    rewards = []
+
+    # 记录每个节点的收益
+    def collect_rewards(node):
+        nodes.append(node.id)
+        rewards.append(node.value / node.visits if node.visits > 0 else 0)
+        for child in node.children:
+            collect_rewards(child)
+
+    collect_rewards(root)
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(nodes, rewards, color="green")
+    plt.xlabel("Node ID")
+    plt.ylabel("Average Reward")
+    plt.title("节点平均收益分布")
+    plt.show()
+
+
+# 可视化决策树、节点访问次数和收益
+visualize_tree(root)
+visualize_node_visits(root)
+visualize_rewards(root)
