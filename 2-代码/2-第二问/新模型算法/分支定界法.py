@@ -197,7 +197,7 @@ def branch_and_bound(data):
         )
 
     # 图表设置
-    plt.title("Profit Analysis for Each Decision Path Across All Cases", fontsize=16)
+    plt.title("", fontsize=16)
     plt.xlabel("Decision Path", fontsize=14)
     plt.ylabel("Profit", fontsize=14)
     plt.xticks(rotation=90, ha="right")
