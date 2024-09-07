@@ -1,19 +1,24 @@
-import math
-
-# 参数
-c_p = [4, 18]  # 零配件购买成本
-c_d = [2, 3]  # 零配件检测成本
-c_d_f = 3  # 成品检测成本
-c_a_f = 5  # 成品拆解成本
-c_s = 6  # 调换成本
-p_c = [0.1, 0.1]  # 零配件次品率
-p_f = 0.1  # 成品次品率
-s_f = 56  # 成品售价
-n_c = 1  # 零配件数量
+import json
+from queue import PriorityQueue
 
 
-# 成本函数
-def compute_cost(x, y, z):
+# 从JSON文件读取数据
+def load_data_from_json(file_path):
+    with open(file_path, "r") as file:
+        data = json.load(file)
+    return data
+
+
+# 从指定情形中获取参数
+def get_parameters(data, case_name):
+    for case in data["cases"]:
+        if case["name"] == case_name:
+            return case
+    raise ValueError(f"Case '{case_name}' not found in the data.")
+
+
+# 计算成本函数
+def calculate_cost(c_p, c_d, c_d_f, c_a_f, c_s, p_c, p_f, s_f, n_c, x, y, z):
     n_f = n_c * (1 - p_c[0] * x[0]) * (1 - p_c[1] * x[1])
     C_p_c = n_c * sum(c_p[i] for i in range(2))
     C_d_c = n_c * sum(x[i] * c_d[i] for i in range(2))
@@ -25,38 +30,76 @@ def compute_cost(x, y, z):
     return Z
 
 
-# 初始化最优解和待处理列表
-best_cost = float("inf")
-best_path = None
-nodes = [([0, 0], 0, 0)]  # 初始化节点列表 (x, y, z)
+# 分支定界法寻找最优路径
+def branch_and_bound(params):
+    # 读取参数
+    c_p = params["c_p"]
+    c_d = params["c_d"]
+    c_d_f = params["c_d_f"]
+    c_a_f = params["c_a_f"]
+    c_s = params["c_s"]
+    p_c = params["p_c"]
+    p_f = params["p_f"]
+    s_f = params["s_f"]
+    n_c = params["n_c"]
 
-# 分支定界法
-while nodes:
-    x, y, z = nodes.pop(0)  # 取出一个节点进行处理
-    # 计算当前节点的成本
-    current_cost = compute_cost(x, y, z)
+    # 优先队列用于存储待处理的节点，按当前最小成本优先
+    pq = PriorityQueue()
+    pq.put((0, [0, 0], 0, 0))  # 初始节点 (估计成本, x, y, z)
 
-    # 更新最优解
-    if current_cost < best_cost:
-        best_cost = current_cost
-        best_path = (x[0], x[1], y, z)
+    # 初始化最优路径和最小成本
+    best_path = None
+    min_cost = float("inf")
 
-    # 如果该路径已经全部决策（x、y、z 全是 0 或 1），不再分裂
-    if len(nodes) < 2:
-        # 分裂节点
-        for i in range(4):
-            if i < 2:  # 修改 x 的决策变量
-                new_x = x[:]
-                new_x[i] = 1 - x[i]
-                nodes.append((new_x, y, z))
-            elif i == 2:  # 修改 y 的决策变量
-                new_y = 1 - y
-                nodes.append((x, new_y, z))
-            elif i == 3:  # 修改 z 的决策变量
-                new_z = 1 - z
-                nodes.append((x, y, new_z))
+    while not pq.empty():
+        # 从队列中取出当前最优的节点
+        current_cost, x, y, z = pq.get()
 
-# 输出最优解
-print(
-    f"最优决策路径: x1={best_path[0]}, x2={best_path[1]}, y={best_path[2]}, z={best_path[3]} => 最小总成本: {best_cost}"
-)
+        # 如果当前节点的成本已经大于或等于已知最小成本，剪枝
+        if current_cost >= min_cost:
+            continue
+
+        # 计算当前节点的实际成本
+        actual_cost = calculate_cost(
+            c_p, c_d, c_d_f, c_a_f, c_s, p_c, p_f, s_f, n_c, x, y, z
+        )
+
+        # 如果是一个完整的解，且比当前最优解更好，更新最优解
+        if len(x) == 2 and isinstance(y, int) and isinstance(z, int):
+            if actual_cost < min_cost:
+                min_cost = actual_cost
+                best_path = (x[0], x[1], y, z)
+            continue
+
+        # 分支扩展：对未确定的变量进行分支
+        if len(x) < 2:  # 分支 x1, x2
+            pq.put((actual_cost, x + [0], y, z))
+            pq.put((actual_cost, x + [1], y, z))
+        elif y is None:  # 分支 y
+            pq.put((actual_cost, x, 0, z))
+            pq.put((actual_cost, x, 1, z))
+        elif z is None:  # 分支 z
+            pq.put((actual_cost, x, y, 0))
+            pq.put((actual_cost, x, y, 1))
+
+    # 输出最优决策路径和最小成本
+    print(
+        f"最优决策路径: x1={best_path[0]}, x2={best_path[1]}, y={best_path[2]}, z={best_path[3]} => 最小总成本: {min_cost}"
+    )
+
+
+# 主函数
+if __name__ == "__main__":
+    # 从JSON文件中读取数据
+    data = load_data_from_json(
+        "F:/1.Project/2.Ongoing_Projects/mathematical_modelling/2-代码/2-第二问/data.json"
+    )  # 替换为实际JSON文件路径
+
+    # 用户选择使用的情形
+    selected_case = "Case 1"  # 用户可以修改此处选择不同的情形
+
+    # 获取选定情形的参数
+    params = get_parameters(data, selected_case)
+
+    # 通过分支定界法寻找最优决策路径
+    branch_and_bound(params)
