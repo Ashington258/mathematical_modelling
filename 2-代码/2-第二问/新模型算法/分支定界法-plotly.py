@@ -59,7 +59,7 @@ def branch_and_bound(data):
     decision_paths = []  # 存储所有的决策路径
 
     # 假设的零配件总数量
-    n_c = 1  # 零配件总数量（假设值，可以调整）
+    n_c = 1  # 各个零配件总数量（假设值，可以调整）
 
     # 遍历所有情况
     for case_data in data["scenarios"]:
