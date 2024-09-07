@@ -1,3 +1,8 @@
+import os
+
+# 将工作目录更改为脚本所在目录
+os.chdir(os.path.dirname(__file__))
+print("Current working directory:", os.getcwd())
 import json
 import matplotlib.pyplot as plt
 

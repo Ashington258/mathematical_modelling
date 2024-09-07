@@ -9,6 +9,11 @@ Description: 请填写简介
 Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
 """
 
+import os
+
+# 将工作目录更改为脚本所在目录
+os.chdir(os.path.dirname(__file__))
+print("Current working directory:", os.getcwd())
 import json
 import plotly.graph_objects as go
 

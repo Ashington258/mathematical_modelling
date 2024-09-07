@@ -1,29 +1,24 @@
-'''
+"""
 Author: Ashington ashington258@proton.me
 Date: 2024-09-07 23:41:48
 LastEditors: Ashington ashington258@proton.me
 LastEditTime: 2024-09-07 23:41:54
-FilePath: \mathematical_modelling\2-代码\2-第二问\新模型算法\分支定界法.py
-Description: 请填写简介
-联系方式:921488837@qq.com
-Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
-'''
-"""
-Author: Ashington ashington258@proton.me
-Date: 2024-09-07 23:37:46
-LastEditors: Ashington ashington258@proton.me
-LastEditTime: 2024-09-07 23:37:52
-FilePath: \2\分支定界法.py
+FilePath: /mathematical_modelling/2-代码/2-第二问/新模型算法/分支定界法.py
 Description: 请填写简介
 联系方式:921488837@qq.com
 Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
 """
 
+import os
+
+# 将工作目录更改为脚本所在目录
+os.chdir(os.path.dirname(__file__))
+print("Current working directory:", os.getcwd())
 import json
 import matplotlib.pyplot as plt
 
 
-# 从JSON文件中读取数据
+# 从 JSON 文件中读取数据
 def load_data_from_json(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -213,10 +208,10 @@ def branch_and_bound(data):
 
     # 输出全局最优决策路径和对应的收益
     print(
-        f"\n全局最优决策路径: (x_1={global_best_decision[0]}, x_2={global_best_decision[1]}, y={global_best_decision[2]}, z={global_best_decision[3]}) 在情况 {global_best_decision[4]} 中 -> 最终收益: {global_best_profit:.2f}"
+        f"/n全局最优决策路径: (x_1={global_best_decision[0]}, x_2={global_best_decision[1]}, y={global_best_decision[2]}, z={global_best_decision[3]}) 在情况 {global_best_decision[4]} 中 -> 最终收益: {global_best_profit:.2f}"
     )
 
 
 # 从JSON文件中加载数据 (假设JSON文件名为'data.json')
-data = load_data_from_json("data.json")
+data = load_data_from_json("./data.json")
 branch_and_bound(data)
