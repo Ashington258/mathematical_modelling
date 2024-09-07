@@ -145,7 +145,7 @@ def branch_and_bound(data):
 
     plt.figure(figsize=(10, 6))
     plt.bar(cases, best_profits, color="skyblue")
-    plt.title("Best Profit for Each Case", fontsize=16)
+    plt.title("", fontsize=16)
     plt.xlabel("Case", fontsize=14)
     plt.ylabel("Best Profit", fontsize=14)
     plt.grid(True, linestyle="--", alpha=0.6)
