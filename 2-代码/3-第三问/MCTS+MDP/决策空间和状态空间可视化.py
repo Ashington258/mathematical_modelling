@@ -1,6 +1,10 @@
 import random
 from math import log
 import matplotlib.pyplot as plt
+
+plt.rcParams["font.sans-serif"] = ["SimHei"]  # 用黑体显示中文
+plt.rcParams["axes.unicode_minus"] = False  # 正确显示负号
+
 import networkx as nx
 
 
