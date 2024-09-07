@@ -1,6 +1,50 @@
 import plotly.express as px
 import pandas as pd
 
+# 更新 parts, semi_products, final_product 和 n_c 的值
+parts = [
+    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 1
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 2
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 3
+    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 4
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 5
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 6
+    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 7
+    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 8
+]
+
+semi_products = [
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 1
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 2
+    {
+        "defect_rate": 0.10,
+        "assembly_cost": 8,
+        "inspection_cost": 4,
+        "disassembly_cost": 6,
+    },  # 半成品 3
+]
+
+final_product = {
+    "defect_rate": 0.10,
+    "assembly_cost": 8,
+    "inspection_cost": 6,
+    "disassembly_cost": 10,
+    "market_price": 200,
+    "exchange_loss": 40,
+}
+
+n_c = [1] * 8  # 每种零配件数量均为 100
+
 
 class MDPState:
     def __init__(self, decisions, parts, semi_products, final_product, n_c):
@@ -81,102 +125,12 @@ class MDPState:
         return -Z  # 返回负收益，因为我们是在最小化总成本
 
 
-# 更新 parts, semi_products, final_product 和 n_c 的值
-parts = [
-    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 1
-    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 2
-    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 3
-    {"defect_rate": 0.10, "purchase_price": 2, "inspection_cost": 1},  # 零配件 4
-    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 5
-    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 6
-    {"defect_rate": 0.10, "purchase_price": 8, "inspection_cost": 1},  # 零配件 7
-    {"defect_rate": 0.10, "purchase_price": 12, "inspection_cost": 2},  # 零配件 8
-]
-
-semi_products = [
-    {
-        "defect_rate": 0.10,
-        "assembly_cost": 8,
-        "inspection_cost": 4,
-        "disassembly_cost": 6,
-    },  # 半成品 1
-    {
-        "defect_rate": 0.10,
-        "assembly_cost": 8,
-        "inspection_cost": 4,
-        "disassembly_cost": 6,
-    },  # 半成品 2
-    {
-        "defect_rate": 0.10,
-        "assembly_cost": 8,
-        "inspection_cost": 4,
-        "disassembly_cost": 6,
-    },  # 半成品 3
-]
-
-final_product = {
-    "defect_rate": 0.10,
-    "assembly_cost": 8,
-    "inspection_cost": 6,
-    "disassembly_cost": 10,
-    "market_price": 200,
-    "exchange_loss": 40,
-}
-
-n_c = [1] * 8  # 每种零配件数量均为 100
-
-
-# 穷举法来验证最优路径
-def exhaustive_search(state):
-    if state.is_terminal():
-        return state.reward(), state.decisions
-
-    best_reward = float("-inf")
-    best_decision_path = []
-
-    # 穷举每一个可能的决策
-    for move in state.possible_moves():
-        next_state = state.move(move)
-        reward, decision_path = exhaustive_search(next_state)
-
-        if reward > best_reward:
-            best_reward = reward
-            best_decision_path = decision_path
-
-    return best_reward, best_decision_path
-
-
-# 初始状态
+# 初始化状态
 initial_state = MDPState([], parts, semi_products, final_product, n_c)
+path_rewards = []
+
 
 # 运行穷举法
-best_reward, best_decision_path = exhaustive_search(initial_state)
-
-print("穷举法找到的最优决策路径:", best_decision_path)
-print("穷举法找到的最优收益:", best_reward)
-
-
-# 穷举法来验证最优路径
-def exhaustive_search(state):
-    if state.is_terminal():
-        return state.reward(), state.decisions
-
-    best_reward = float("-inf")
-    best_decision_path = []
-
-    # 穷举每一个可能的决策
-    for move in state.possible_moves():
-        next_state = state.move(move)
-        reward, decision_path = exhaustive_search(next_state)
-
-        if reward > best_reward:
-            best_reward = reward
-            best_decision_path = decision_path
-
-    return best_reward, best_decision_path
-
-
-# 收集所有决策路径和奖励
 def exhaustive_search(state, path_rewards, current_path=[]):
     if state.is_terminal():
         reward = state.reward()
@@ -203,11 +157,6 @@ def exhaustive_search(state, path_rewards, current_path=[]):
     return best_reward, best_decision_path
 
 
-# 初始化状态
-initial_state = MDPState([], parts, semi_products, final_product, n_c)
-path_rewards = []
-
-# 运行穷举法
 best_reward, best_decision_path = exhaustive_search(initial_state, path_rewards)
 
 # 准备数据用于 Plotly
@@ -226,6 +175,39 @@ fig = px.scatter(
     labels={"Decision Path": "Decision Path (Hex)", "Reward": "Reward"},
     title="Decision Paths and Their Rewards",
     color_discrete_map={"Max": "red", "Other": "blue"},  # 红色标记最大值
+)
+
+# 增加一个特殊的标记用于突出显示最大奖励值
+fig.add_trace(
+    px.scatter(
+        data[data["Marker"] == "Max"],
+        x="Decision Path",
+        y="Reward",
+        size=[10],  # 使用更大的点大小
+        color="Marker",
+        color_discrete_map={"Max": "red"},
+    ).data[0]
+)
+
+# 在最大值点上添加文本标签
+fig.add_annotation(
+    x=data.loc[max_reward_idx, "Decision Path"],
+    y=data.loc[max_reward_idx, "Reward"],
+    text="最大奖励",
+    showarrow=True,
+    font=dict(family="Courier New, monospace", size=16, color="#ffffff"),
+    align="center",
+    arrowhead=2,
+    arrowsize=1,
+    arrowwidth=2,
+    arrowcolor="#636363",
+    ax=20,
+    ay=-30,
+    bordercolor="#c7c7c7",
+    borderwidth=2,
+    borderpad=4,
+    bgcolor="#ff7f0e",
+    opacity=0.8,
 )
 
 fig.show()
