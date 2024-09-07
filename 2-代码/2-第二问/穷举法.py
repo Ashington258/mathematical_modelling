@@ -2,12 +2,14 @@
 Author: Ashington ashington258@proton.me
 Date: 2024-09-07 14:32:32
 LastEditors: Ashington ashington258@proton.me
-LastEditTime: 2024-09-07 14:32:33
-FilePath: /mathematical_modelling/2-代码/2-第二问/穷举法.py
+LastEditTime: 2024-09-07 14:40:16
+FilePath: \mathematical_modelling\2-代码\2-第二问\穷举法.py
 Description: 请填写简介
 联系方式:921488837@qq.com
 Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
 """
+
+
 
 import json
 
@@ -90,7 +92,7 @@ if __name__ == "__main__":
     )  # 替换为实际JSON文件路径
 
     # 用户选择使用的情形
-    selected_case = "Case 1"  # 用户可以修改此处选择不同的情形
+    selected_case = "Case 4"  # 用户可以修改此处选择不同的情形
 
     # 获取选定情形的参数
     params = get_parameters(data, selected_case)

@@ -50,37 +50,58 @@ def branch_and_bound(params):
     # 初始化最优路径和最小成本
     best_path = None
     min_cost = float("inf")
+    iteration = 0
 
     while not pq.empty():
+        iteration += 1
         # 从队列中取出当前最优的节点
         current_cost, x, y, z = pq.get()
+        print(
+            f"Iteration {iteration}: Current node -> x={x}, y={y}, z={z}, Estimated Cost = {current_cost}"
+        )
 
         # 如果当前节点的成本已经大于或等于已知最小成本，剪枝
         if current_cost >= min_cost:
+            print(
+                f"Iteration {iteration}: Node pruned as cost {current_cost} >= {min_cost}"
+            )
             continue
 
         # 计算当前节点的实际成本
         actual_cost = calculate_cost(
             c_p, c_d, c_d_f, c_a_f, c_s, p_c, p_f, s_f, n_c, x, y, z
         )
+        print(f"Iteration {iteration}: Actual Cost = {actual_cost}")
 
         # 如果是一个完整的解，且比当前最优解更好，更新最优解
         if len(x) == 2 and isinstance(y, int) and isinstance(z, int):
             if actual_cost < min_cost:
                 min_cost = actual_cost
                 best_path = (x[0], x[1], y, z)
+                print(
+                    f"Iteration {iteration}: Found new best path -> x1={x[0]}, x2={x[1]}, y={y}, z={z}, Cost = {min_cost}"
+                )
             continue
 
         # 分支扩展：对未确定的变量进行分支
         if len(x) < 2:  # 分支 x1, x2
             pq.put((actual_cost, x + [0], y, z))
             pq.put((actual_cost, x + [1], y, z))
+            print(
+                f"Iteration {iteration}: Branching on x -> New nodes added for x={x + [0]} and x={x + [1]}"
+            )
         elif y is None:  # 分支 y
             pq.put((actual_cost, x, 0, z))
             pq.put((actual_cost, x, 1, z))
+            print(
+                f"Iteration {iteration}: Branching on y -> New nodes added for y=0 and y=1"
+            )
         elif z is None:  # 分支 z
             pq.put((actual_cost, x, y, 0))
             pq.put((actual_cost, x, y, 1))
+            print(
+                f"Iteration {iteration}: Branching on z -> New nodes added for z=0 and z=1"
+            )
 
     # 输出最优决策路径和最小成本
     print(
