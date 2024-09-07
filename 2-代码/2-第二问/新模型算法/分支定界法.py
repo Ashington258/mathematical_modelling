@@ -200,7 +200,9 @@ def branch_and_bound(data):
     plt.title("", fontsize=16)
     plt.xlabel("Decision Path", fontsize=14)
     plt.ylabel("Profit", fontsize=14)
-    plt.xticks(rotation=90, ha="right")
+
+    # 将决策路径标签旋转45度，并设置右对齐
+    plt.xticks(rotation=45, ha="right")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
     plt.tight_layout()

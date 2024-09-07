@@ -1,21 +1,10 @@
-"""
-Author: Ashington ashington258@proton.me
-Date: 2024-09-07 23:39:52
-LastEditors: Ashington ashington258@proton.me
-LastEditTime: 2024-09-07 23:39:58
-FilePath: \2\分支定界法-plotly.py
-Description: 请填写简介
-联系方式:921488837@qq.com
-Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
-"""
-
+import json
+import plotly.graph_objects as go
 import os
 
 # 将工作目录更改为脚本所在目录
 os.chdir(os.path.dirname(__file__))
 print("Current working directory:", os.getcwd())
-import json
-import plotly.graph_objects as go
 
 
 # 从JSON文件中读取数据
@@ -147,8 +136,6 @@ def branch_and_bound(data):
                         + (next_decision,)
                         + current_branch[depth + 1 :]
                     )
-                    # 计算上界（可以用一个更好的估计方法）
-                    # 简化示例中，假设不做其他调整，直接扩展
                     stack.append((new_branch, next_depth))
 
         # 输出当前情况下的最优决策路径
@@ -178,17 +165,17 @@ def branch_and_bound(data):
     ]
 
     for idx, scenario in enumerate(all_scenarios):
-        # 绘制折线图
+        # 绘制折线图并设置普通点大小
         fig.add_trace(
             go.Scatter(
                 x=decision_paths,
                 y=scenario["profits"],
                 mode="lines+markers",
-                marker=dict(color=colors[idx]),
+                marker=dict(color=colors[idx], size=9),  # 普通点的大小为8
                 name=f'Case {scenario["case"]}',
             )
         )
-        # 重点标记最优决策路径点
+        # 重点标记最优决策路径点，大小更大并加粗边框
         fig.add_trace(
             go.Scatter(
                 x=[decision_paths[scenario["best_index"]]],
