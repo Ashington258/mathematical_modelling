@@ -3,7 +3,6 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
-from matplotlib.lines import Line2D  # For custom legend
 
 # Set the working directory to the script directory
 os.chdir(os.path.dirname(__file__))
@@ -53,15 +52,12 @@ def monte_carlo_sensitivity_on_decisions(all_data, n_simulations=100):
     fig, axes = plt.subplots(2, 3, figsize=(18, 12))  # Adjust subplot layout as needed
     axes = axes.flatten()  # Flatten if using more than one row
     decisions = list(product([0, 1], repeat=4))  # Generate all decision combinations
-    decision_colors = plt.cm.viridis(
-        np.linspace(0, 1, len(decisions))
-    )  # Color map for decisions
 
     for idx, case_data in enumerate(all_data["scenarios"]):
         p_c_1_samples = np.random.uniform(0, 0.1, n_simulations)
         max_profits = []
 
-        for decision, color in zip(decisions, decision_colors):
+        for decision in decisions:
             profits = []
             for p_c_1 in p_c_1_samples:
                 profit = calculate_profit(
@@ -85,22 +81,19 @@ def monte_carlo_sensitivity_on_decisions(all_data, n_simulations=100):
             normalized_profits = [
                 (profit / max(max_profits)) * 100 for profit in profits
             ]  # Normalize
-            axes[idx].scatter(p_c_1_samples, normalized_profits, alpha=0.5, color=color)
+            axes[idx].scatter(
+                p_c_1_samples,
+                normalized_profits,
+                alpha=0.5,
+                label=f"Decision: {decision}",
+            )
 
         axes[idx].set_title(f'Case {case_data["case"]}')
         axes[idx].set_xlabel("Part 1 Defect Rate (p_c_1)")
         axes[idx].set_ylabel("Normalized Profit (%)")
+        axes[idx].legend()
         axes[idx].grid(True)
 
-    # Create a custom legend for decisions
-    custom_lines = [Line2D([0], [0], color=color, lw=4) for color in decision_colors]
-    fig.legend(
-        custom_lines,
-        [f"Decision: {decision}" for decision in decisions],
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.05),
-        ncol=4,
-    )
     plt.tight_layout()
     plt.show()
 

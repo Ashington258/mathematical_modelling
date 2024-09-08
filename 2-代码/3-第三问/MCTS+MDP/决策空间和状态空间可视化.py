@@ -197,7 +197,7 @@ final_product = {
     "exchange_loss": 40,
 }
 
-n_c = [1] * 8  # 每种零配件数量均为 100
+n_c = [1 / 8] * 8  # 每种零配件数量均为 100
 
 # 初始化状态
 initial_state = MDPState([], parts, semi_products, final_product, n_c)

@@ -1,24 +1,22 @@
 import os
 import json
 import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
 from itertools import product
-from plotly.colors import qualitative
 
-# Set the working directory to the script directory
+# 将工作目录更改为脚本所在目录
 os.chdir(os.path.dirname(__file__))
 print("Current working directory:", os.getcwd())
 
 
-# Load data from a JSON file
+# 从 JSON 文件中读取数据
 def load_data_from_json(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data
 
 
-# Calculate the profit for a decision path
+# 计算决策路径的收益
 def calculate_profit(
     n_c,
     p_c_1,
@@ -49,87 +47,78 @@ def calculate_profit(
     return -Z
 
 
-# Perform Monte Carlo sensitivity analysis on all decisions for a case
-def monte_carlo_sensitivity_on_decisions(all_data, n_simulations=100):
+# Monte Carlo sensitivity analysis for each decision path
+def monte_carlo_sensitivity_on_decisions(case_data, n_simulations=100, ax=None):
     decisions = list(product([0, 1], repeat=4))  # Generate all decision combinations
-    decision_colors = (
-        qualitative.Plotly
-    )  # Use Plotly's built-in qualitative color scheme
+    p_c_1_samples = np.random.uniform(0, 0.1, n_simulations)
+    all_profits = []
 
-    # Ensure there are enough colors for the decisions
-    if len(decisions) > len(decision_colors):
-        decision_colors *= len(decisions) // len(decision_colors) + 1
-
-    # Create subplot grid
-    fig = make_subplots(
-        rows=2,
-        cols=3,
-        subplot_titles=[
-            f'Case {case_data["case"]}' for case_data in all_data["scenarios"]
-        ],
-    )
-
-    for idx, case_data in enumerate(all_data["scenarios"]):
-        p_c_1_samples = np.random.uniform(0, 0.1, n_simulations)
-        max_profits = []
-
-        for decision, color in zip(decisions, decision_colors):
-            profits = []
-            for p_c_1 in p_c_1_samples:
-                profit = calculate_profit(
-                    100,
-                    p_c_1,
-                    case_data["part_2_defect_rate"],
-                    case_data["part_1_purchase_price"],
-                    case_data["part_2_purchase_price"],
-                    case_data["part_1_detection_cost"],
-                    case_data["part_2_detection_cost"],
-                    case_data["product_defect_rate"],
-                    case_data["assembly_cost"],
-                    case_data["product_detection_cost"],
-                    case_data["market_price"],
-                    case_data["replacement_loss"],
-                    case_data["disassembly_cost"],
-                    decision,
-                )
-                profits.append(profit)
-            max_profits.append(max(profits))
-            normalized_profits = [
-                (profit / max(max_profits)) * 100 for profit in profits
-            ]  # Normalize
-            row = idx // 3 + 1
-            col = idx % 3 + 1
-            fig.add_trace(
-                go.Scatter(
-                    x=p_c_1_samples,
-                    y=normalized_profits,
-                    mode="markers",
-                    marker=dict(color=color),
-                    name=(f"Decision: {decision}" if idx == 0 else ""),
-                    showlegend=(idx == 0),
-                ),
-                row=row,
-                col=col,
+    results = {}
+    for decision in decisions:
+        profits = []
+        for p_c_1 in p_c_1_samples:
+            profit = calculate_profit(
+                100,
+                p_c_1,
+                case_data["part_2_defect_rate"],
+                case_data["part_1_purchase_price"],
+                case_data["part_2_purchase_price"],
+                case_data["part_1_detection_cost"],
+                case_data["part_2_detection_cost"],
+                case_data["product_defect_rate"],
+                case_data["assembly_cost"],
+                case_data["product_detection_cost"],
+                case_data["market_price"],
+                case_data["replacement_loss"],
+                case_data["disassembly_cost"],
+                decision,
             )
+            profits.append(profit)
+        results[decision] = profits
+        all_profits.extend(profits)
 
-        fig.update_xaxes(title_text="Part 1 Defect Rate (p_c_1)", row=row, col=col)
-        fig.update_yaxes(title_text="Normalized Profit (%)", row=row, col=col)
+    max_profit = max(all_profits)
 
-    fig.update_layout(
-        title="Monte Carlo Sensitivity Analysis on Decisions",
-        legend_title_text="Decisions",
-        height=800,
-        width=1200,
-        margin=dict(l=50, r=50, t=50, b=50),
-        showlegend=True,
-    )
+    for decision, profits in results.items():
+        normalized_profits = [
+            (profit / max_profit) * 100 for profit in profits
+        ]  # Normalize
+        ax.scatter(p_c_1_samples, normalized_profits, alpha=0.5)
 
-    fig.show()
+    ax.set_title(f'Case {case_data["case"]}')
+    ax.set_xlabel("Part 1 Defect Rate (p_c_1)")
+    ax.set_ylabel("Normalized Profit (%)")
+    ax.grid(True)
 
 
 # Load data from JSON
 data_path = "./data.json"
 data = load_data_from_json(data_path)
 
-# Perform sensitivity analysis on each case
-monte_carlo_sensitivity_on_decisions(data, 100)
+# 创建6个子图
+fig, axs = plt.subplots(2, 3, figsize=(18, 10))
+axs = axs.flatten()  # 将子图对象展平为一维数组
+
+# Perform sensitivity analysis on each case for all decision paths
+for i, case_data in enumerate(data["scenarios"]):
+    monte_carlo_sensitivity_on_decisions(case_data, 100, ax=axs[i])
+
+# 添加统一的图例，仅显示一次决策变量
+decisions = list(product([0, 1], repeat=4))  # 决策变量
+handles = [
+    plt.Line2D(
+        [],
+        [],
+        marker="o",
+        color="w",
+        markerfacecolor="gray",
+        markersize=10,
+        label=f"Decision: {decision}",
+    )
+    for decision in decisions[: len(decisions) // 2]
+]
+
+fig.legend(handles=handles, loc="upper right", fontsize="small")
+
+plt.tight_layout()
+plt.show()
