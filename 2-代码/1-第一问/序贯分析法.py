@@ -1,26 +1,41 @@
- from scipy.stats import binom
+import numpy as np
+from scipy.stats import binom
+import matplotlib.pyplot as plt
 
-# 设置参数
-p_nominal = 0.10  # 标称次品率
-alpha = 0.05      # 第一类错误的风险，用于95%置信度拒收
-beta = 0.10       # 第二类错误的风险，用于90%置信度接收
 
-# 初始化变量
-n_95 = 20  # 从较高的样本量开始以寻找更稳健的结果
-n_90 = 20
+# Function to calculate the minimum number of samples required for SPR testing
+def min_samples_sprt(p0, p1, alpha, beta):
+    log_alpha = np.log(beta / (1 - alpha))
+    log_beta = np.log((1 - beta) / alpha)
+    n = 0  # Initial number of samples
+    log_likelihood_ratio = 0
 
-# 计算95%置信度拒收的最小n和对应的k
-while True:
-    k_95 = binom.ppf(1 - alpha, n_95, p_nominal)
-    if binom.sf(k_95, n_95, p_nominal) <= alpha:
-        break
-    n_95 += 1
+    # Incrementally calculate likelihood ratios until a decision threshold is met
+    while True:
+        n += 1
+        # Calculate probability of seeing a defective part under H0 and H1
+        likelihood_0 = binom.pmf(1, 1, p0)  # Probability of defective under H0
+        likelihood_1 = binom.pmf(1, 1, p1)  # Probability of defective under H1
+        # Update log likelihood ratio
+        log_likelihood_ratio += np.log(likelihood_1 / likelihood_0)
 
-# 计算90%置信度接收的最小n和对应的k
-while True:
-    k_90 = binom.ppf(beta, n_90, p_nominal)
-    if binom.cdf(k_90, n_90, p_nominal) >= 1 - beta:
-        break
-    n_90 += 1
+        # Check if either decision threshold is met
+        if log_likelihood_ratio >= log_beta or log_likelihood_ratio <= log_alpha:
+            break
 
-n_95, int(k_95), n_90, int(k_90)
+    return n
+
+
+# Given values
+p0 = 0.10
+p1 = 0.15  # Alternative hypothesis slightly higher defect rate
+
+# Scenario 1: Alpha = 5%, Beta = 10%
+n_samples_1 = min_samples_sprt(p0, p1, alpha=0.000005, beta=0.10)
+
+# Scenario 2: Alpha = 10%, Beta = 5%
+n_samples_2 = min_samples_sprt(p0, p1, alpha=0.000010, beta=0.05)
+
+# Print the results
+print(f"Minimum samples required for scenario 1 (95% confidence): {n_samples_1}")
+print(f"Minimum samples required for scenario 2 (90% confidence): {n_samples_2}")
