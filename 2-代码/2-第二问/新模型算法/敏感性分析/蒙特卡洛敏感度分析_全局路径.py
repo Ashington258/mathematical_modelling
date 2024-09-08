@@ -47,7 +47,6 @@ def calculate_profit(
     x_1, x_2, y, z = decision
     effective_parts = n_c * (1 - x_1 * p_c_1) * (1 - x_2 * p_c_2)
     n_f = effective_parts * (1 - p_f)
-
     C_c_p = n_c * (c_p_1 + c_p_2)
     C_c_d = n_c * (x_1 * c_d_1 + x_2 * c_d_2)
     C_d_f = c_d_f * y * n_f * (1 - p_f)
@@ -55,7 +54,6 @@ def calculate_profit(
     C_s = c_s * y * n_f * p_f
     C_s_f = c_s_f * n_f
     S = s_f * n_f
-
     Z = C_c_p + C_c_d + C_d_f + C_a_f + C_s + C_s_f - S
     return -Z
 
@@ -64,8 +62,9 @@ def calculate_profit(
 def monte_carlo_sensitivity_on_decisions(case_data, n_simulations=100):
     decisions = list(product([0, 1], repeat=4))  # Generate all decision combinations
     p_c_1_samples = np.random.uniform(0, 0.1, n_simulations)
+    all_profits = []
 
-    plt.figure(figsize=(10, 6))
+    results = {}
     for decision in decisions:
         profits = []
         for p_c_1 in p_c_1_samples:
@@ -86,11 +85,25 @@ def monte_carlo_sensitivity_on_decisions(case_data, n_simulations=100):
                 decision,
             )
             profits.append(profit)
-        plt.scatter(p_c_1_samples, profits, alpha=0.5, label=f"Decision: {decision}")
+        results[decision] = profits
+        all_profits.extend(profits)
 
-    plt.title(f'Profit Sensitivity for All Decisions in Case {case_data["case"]}')
+    max_profit = max(all_profits)
+
+    plt.figure(figsize=(10, 6))
+    for decision, profits in results.items():
+        normalized_profits = [
+            (profit / max_profit) * 100 for profit in profits
+        ]  # Normalize
+        plt.scatter(
+            p_c_1_samples, normalized_profits, alpha=0.5, label=f"Decision: {decision}"
+        )
+
+    plt.title(
+        f'Normalized Profit Sensitivity for All Decisions in Case {case_data["case"]}'
+    )
     plt.xlabel("Part 1 Defect Rate (p_c_1)")
-    plt.ylabel("Profit")
+    plt.ylabel("Normalized Profit (%)")
     plt.legend()
     plt.grid(True)
     plt.show()
