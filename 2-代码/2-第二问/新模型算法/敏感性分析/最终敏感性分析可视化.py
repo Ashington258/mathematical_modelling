@@ -1,9 +1,10 @@
 import os
 import json
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from itertools import product
-from matplotlib.lines import Line2D  # For custom legend
+from plotly.colors import qualitative
 
 # Set the working directory to the script directory
 os.chdir(os.path.dirname(__file__))
@@ -50,12 +51,23 @@ def calculate_profit(
 
 # Perform Monte Carlo sensitivity analysis on all decisions for a case
 def monte_carlo_sensitivity_on_decisions(all_data, n_simulations=100):
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))  # Adjust subplot layout as needed
-    axes = axes.flatten()  # Flatten if using more than one row
     decisions = list(product([0, 1], repeat=4))  # Generate all decision combinations
-    decision_colors = plt.cm.viridis(
-        np.linspace(0, 1, len(decisions))
-    )  # Color map for decisions
+    decision_colors = (
+        qualitative.Plotly
+    )  # Use Plotly's built-in qualitative color scheme
+
+    # Ensure there are enough colors for the decisions
+    if len(decisions) > len(decision_colors):
+        decision_colors *= len(decisions) // len(decision_colors) + 1
+
+    # Create subplot grid
+    fig = make_subplots(
+        rows=2,
+        cols=3,
+        subplot_titles=[
+            f'Case {case_data["case"]}' for case_data in all_data["scenarios"]
+        ],
+    )
 
     for idx, case_data in enumerate(all_data["scenarios"]):
         p_c_1_samples = np.random.uniform(0, 0.1, n_simulations)
@@ -85,24 +97,34 @@ def monte_carlo_sensitivity_on_decisions(all_data, n_simulations=100):
             normalized_profits = [
                 (profit / max(max_profits)) * 100 for profit in profits
             ]  # Normalize
-            axes[idx].scatter(p_c_1_samples, normalized_profits, alpha=0.5, color=color)
+            row = idx // 3 + 1
+            col = idx % 3 + 1
+            fig.add_trace(
+                go.Scatter(
+                    x=p_c_1_samples,
+                    y=normalized_profits,
+                    mode="markers",
+                    marker=dict(color=color),
+                    name=(f"Decision: {decision}" if idx == 0 else ""),
+                    showlegend=(idx == 0),
+                ),
+                row=row,
+                col=col,
+            )
 
-        axes[idx].set_title(f'Case {case_data["case"]}')
-        axes[idx].set_xlabel("Part 1 Defect Rate (p_c_1)")
-        axes[idx].set_ylabel("Normalized Profit (%)")
-        axes[idx].grid(True)
+        fig.update_xaxes(title_text="Part 1 Defect Rate (p_c_1)", row=row, col=col)
+        fig.update_yaxes(title_text="Normalized Profit (%)", row=row, col=col)
 
-    # Create a custom legend for decisions
-    custom_lines = [Line2D([0], [0], color=color, lw=4) for color in decision_colors]
-    fig.legend(
-        custom_lines,
-        [f"Decision: {decision}" for decision in decisions],
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.05),
-        ncol=4,
+    fig.update_layout(
+        title="Monte Carlo Sensitivity Analysis on Decisions",
+        legend_title_text="Decisions",
+        height=800,
+        width=1200,
+        margin=dict(l=50, r=50, t=50, b=50),
+        showlegend=True,
     )
-    plt.tight_layout()
-    plt.show()
+
+    fig.show()
 
 
 # Load data from JSON
