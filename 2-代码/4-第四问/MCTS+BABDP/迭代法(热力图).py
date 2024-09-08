@@ -71,6 +71,12 @@ def visualize_results(df):
         color="reward",  # 用收益值作为颜色标注
         title="各决策路径与收益的相关性散点图",
     )
+
+    # 更新布局，调整字体方向以防止重叠
+    fig.update_layout(
+        font=dict(size=10),  # 调整字体大小
+        xaxis_tickangle=45,  # 将x轴标签旋转45度
+    )
     fig.show()
 
 
